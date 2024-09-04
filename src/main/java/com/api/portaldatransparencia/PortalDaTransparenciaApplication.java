@@ -1,4 +1,4 @@
-package com.api.api;
+package com.api.portaldatransparencia;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
