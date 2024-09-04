@@ -1,3 +1,7 @@
+package com.api.portaldatransparencia.controller;
+
+import com.api.portaldatransparencia.model.Projeto;
+import com.api.portaldatransparencia.service.ProjetoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

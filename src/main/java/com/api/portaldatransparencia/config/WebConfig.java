@@ -1,4 +1,4 @@
-package com.seuDominio.nomeDoProjeto.config;
+package com.api.portaldatransparencia.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

@@ -1,3 +1,13 @@
+package com.api.portaldatransparencia.service;
+
+import com.api.portaldatransparencia.model.Projeto;
+import com.api.portaldatransparencia.repository.ProjetoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
 @Service
 public class ProjetoService {
 
