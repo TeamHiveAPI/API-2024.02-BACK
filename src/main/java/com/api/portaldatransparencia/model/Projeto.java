@@ -19,6 +19,8 @@ public class Projeto {
 	private LocalDate dataTermino;
 	private String classificacao;
 	private String situacao;
+	private String empresa;
+	private double valor;
 
 	// Getters e Setters
 	public Long getId() {
@@ -75,5 +77,21 @@ public class Projeto {
 
 	public void setSituacao(String situacao) {
 		this.situacao = situacao;
+	}
+
+	public String getEmpresa() {
+		return empresa;
+	}
+
+	public void setEmpresa(String empresa) {
+		this.empresa = empresa;
+	}
+
+	public double getValor() {
+		return valor;
+	}
+
+	public void setValor(double valor) {
+		this.valor = valor;
 	}
 }
