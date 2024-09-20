@@ -27,7 +27,6 @@ public class UsuarioService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    // Salvar Usuário
     public Usuario salvarUsuario(Usuario usuario) {
         if (!validarSenha(usuario.getSenha())) {
             throw new IllegalArgumentException("Senha inválida: deve conter pelo menos 8 caracteres, uma letra maiúscula, um número e um caractere especial.");
@@ -35,13 +34,10 @@ public class UsuarioService {
         return usuarioRepository.save(usuario);
     }
 
-
-    // Listar Usuários
     public List<Usuario> listarUsuarios() {
         return usuarioRepository.findAll();
     }
 
-    // Buscar Usuários com filtros dinâmicos
     public List<Usuario> buscarUsuarios(String email, String senha) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Usuario> cq = cb.createQuery(Usuario.class);
@@ -64,7 +60,6 @@ public class UsuarioService {
         return entityManager.createQuery(cq).getResultList();
     }
 
-    // Buscar Usuário por ID
     public Optional<Usuario> buscarUsuarioPorId(Long id) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Usuario> cq = cb.createQuery(Usuario.class);
@@ -77,14 +72,12 @@ public class UsuarioService {
         return Optional.ofNullable(resultado);
     }
 
-    // Deletar Usuário
     public void deletarUsuario(Long id) {
         usuarioRepository.deleteById(id);
     }
 
-    // Validação de senha
     public boolean validarSenha(String senha) {
-        String regex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{8,50})";
+        String regex = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])(?=.{8,50}).*$";
         Pattern pattern = Pattern.compile(regex);
         return pattern.matcher(senha).matches();
     }
