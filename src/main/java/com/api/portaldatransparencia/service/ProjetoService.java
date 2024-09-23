@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.api.portaldatransparencia.model.Projeto;
 import com.api.portaldatransparencia.repository.ProjetoRepository;
@@ -17,6 +18,10 @@ import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 
 @Service
 public class ProjetoService {
@@ -92,4 +97,32 @@ public class ProjetoService {
     public void deletarProjeto(Long id) {
         projetoRepository.deleteById(id);
     }
+
+    private final String pastaUpload = "uploads/";
+
+    public String salvarArquivo(MultipartFile arquivo) {
+        try {
+            // Criar diretório se não existir
+            Path pasta = Paths.get(pastaUpload);
+            if (!Files.exists(pasta)) {
+                Files.createDirectories(pasta);
+            }
+
+            // Salvar o arquivo
+            String nomeArquivo = arquivo.getOriginalFilename();
+            Path caminhoArquivo = pasta.resolve(nomeArquivo);
+            Files.copy(arquivo.getInputStream(), caminhoArquivo);
+
+            return nomeArquivo;
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao salvar o arquivo", e);
+        }
+    }
+
+    // Salvar projeto (com o arquivo associado)
+    public Projeto salvarProjetoComArquivo(Projeto projeto) {
+        // Implementação do método para salvar o projeto
+        return projetoRepository.save(projeto);
+    }
+
 }

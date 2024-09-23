@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.api.portaldatransparencia.model.Projeto;
 import com.api.portaldatransparencia.service.ProjetoService;
@@ -26,9 +28,27 @@ public class ProjetoController {
     @Autowired
     private ProjetoService projetoService;
 
-    @PostMapping
-    public Projeto criarProjeto(@RequestBody Projeto projeto) {
-        return projetoService.salvarProjeto(projeto);
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<Projeto> criarProjeto(
+            @RequestParam("projeto") String projetoJson,
+            @RequestParam("arquivo") MultipartFile arquivo) {
+
+        // Converter JSON para o objeto Projeto
+        ObjectMapper objectMapper = new ObjectMapper();
+        Projeto projeto;
+        try {
+            projeto = objectMapper.readValue(projetoJson, Projeto.class);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        String nomeArquivo = projetoService.salvarArquivo(arquivo);
+
+        // Salvar o projeto com o nome do arquivo associado
+        projeto.setNomeArquivo(nomeArquivo);
+        Projeto projetoSalvo = projetoService.salvarProjeto(projeto);
+
+        return ResponseEntity.ok(projetoSalvo);
     }
 
     @GetMapping

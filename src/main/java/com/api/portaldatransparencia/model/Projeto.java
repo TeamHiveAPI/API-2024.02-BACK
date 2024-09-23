@@ -21,6 +21,7 @@ public class Projeto {
 	private String situacao;
 	private String empresa;
 	private double valor;
+	private String nomeArquivo;
 
 	// Getters e Setters
 	public Long getId() {
@@ -93,5 +94,13 @@ public class Projeto {
 
 	public void setValor(double valor) {
 		this.valor = valor;
+	}
+
+	public String getNomeArquivo() {
+		return nomeArquivo;
+	}
+
+	public void setNomeArquivo(String nomeArquivo) {
+		this.nomeArquivo = nomeArquivo;
 	}
 }
