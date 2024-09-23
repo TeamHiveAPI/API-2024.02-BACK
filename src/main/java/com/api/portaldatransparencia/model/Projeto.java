@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.LocalDate;
+import jakarta.persistence.Column;
 
 @Entity
 public class Projeto {
@@ -13,17 +14,52 @@ public class Projeto {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Column (nullable = false)
 	private String referencia;
+
+	@Column (nullable = false)
 	private String coordenador;
+
+	@Column (nullable = false)
 	private LocalDate dataInicio;
+
+	@Column (length = 2400)
+	private String descricao;
+
+	@Column (nullable = true)
 	private LocalDate dataTermino;
+
+	@Column (nullable = false)
 	private String classificacao;
+
+	@Column (nullable = false)
 	private String situacao;
+
+	@Column (nullable = false)
 	private String empresa;
+
+	@Column (nullable = false)
 	private double valor;
+
+	@Column (nullable = false)
 	private String nomeArquivo;
 
 	// Getters e Setters
+	public Projeto() {}
+
+	public Projeto(String referencia, String coordenador, String descricao, LocalDate dataInicio, LocalDate dataTermino,
+	               String classificacao, String situacao, String empresa, double valor) {
+		this.referencia = referencia;
+		this.coordenador = coordenador;
+		this.descricao = descricao;
+		this.dataInicio = dataInicio;
+		this.dataTermino = dataTermino;
+		this.classificacao = classificacao;
+		this.situacao = situacao;
+		this.empresa = empresa;
+		this.valor = valor;
+	}
+
 	public Long getId() {
 		return id;
 	}
