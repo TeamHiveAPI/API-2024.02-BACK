@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.api.portaldatransparencia.model.Projeto;
@@ -28,8 +29,15 @@ public class ProjetoController {
     @Autowired
     private ProjetoService projetoService;
 
+    @PostMapping
+    public ResponseEntity<Projeto> criarProjetoSemArquivo(@RequestBody Projeto projeto) {
+        // Processa o projeto sem arquivo
+        Projeto projetoSalvo = projetoService.salvarProjeto(projeto);
+        return ResponseEntity.ok(projetoSalvo);
+    }
+
     @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<Projeto> criarProjeto(
+    public ResponseEntity<Projeto> criarProjetoComArquivo(
             @RequestParam("projeto") String projetoJson,
             @RequestParam("arquivo") MultipartFile arquivo) {
 
@@ -42,14 +50,14 @@ public class ProjetoController {
             return ResponseEntity.badRequest().build();
         }
 
+        // Salvar arquivo e associar ao projeto
         String nomeArquivo = projetoService.salvarArquivo(arquivo);
-
-        // Salvar o projeto com o nome do arquivo associado
         projeto.setNomeArquivo(nomeArquivo);
         Projeto projetoSalvo = projetoService.salvarProjeto(projeto);
 
         return ResponseEntity.ok(projetoSalvo);
     }
+
 
     @GetMapping
     public List<Projeto> listarProjetos() {

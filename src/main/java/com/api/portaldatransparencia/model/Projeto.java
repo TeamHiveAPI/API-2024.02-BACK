@@ -41,7 +41,7 @@ public class Projeto {
 	@Column (nullable = false)
 	private double valor;
 
-	@Column (nullable = false)
+	@Column (nullable = true)
 	private String nomeArquivo;
 
 	// Getters e Setters
