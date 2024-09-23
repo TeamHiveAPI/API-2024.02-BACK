@@ -21,6 +21,7 @@ public class DataInitializer {
                 Usuario usuario = new Usuario();
                 usuario.setEmail("admin@example.com");
                 usuario.setSenha("Admin@123");
+                usuario.setTipo("admin");
                 try {
                     usuarioService.salvarUsuario(usuario);
                     System.out.println("Usuário admin inicializado.");
