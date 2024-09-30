@@ -23,7 +23,7 @@ public class Projeto {
 	@Column (nullable = false)
 	private LocalDate dataInicio;
 
-	@Column (length = 2400)
+	@Column (nullable = false, length = 2400)
 	private String descricao;
 
 	@Column (nullable = true)
@@ -139,4 +139,13 @@ public class Projeto {
 	public void setNomeArquivo(String nomeArquivo) {
 		this.nomeArquivo = nomeArquivo;
 	}
+
+	public String getDescricao() {
+		return descricao;
+	}
+
+	public void setDescricao(String descricao) {
+		this.descricao = descricao;
+	}
+
 }

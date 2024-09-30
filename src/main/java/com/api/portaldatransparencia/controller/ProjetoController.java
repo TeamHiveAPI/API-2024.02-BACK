@@ -32,6 +32,8 @@ public class ProjetoController {
     @PostMapping
     public ResponseEntity<Projeto> criarProjetoSemArquivo(@RequestBody Projeto projeto) {
         // Processa o projeto sem arquivo
+        System.out.println("Descrição recebida: " + projeto.getDescricao());
+
         Projeto projetoSalvo = projetoService.salvarProjeto(projeto);
         return ResponseEntity.ok(projetoSalvo);
     }
