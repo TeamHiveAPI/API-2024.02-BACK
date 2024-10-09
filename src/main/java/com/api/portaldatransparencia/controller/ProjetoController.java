@@ -1,9 +1,13 @@
 package com.api.portaldatransparencia.controller;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,37 +33,47 @@ public class ProjetoController {
     @Autowired
     private ProjetoService projetoService;
 
-    @PostMapping
-    public ResponseEntity<Projeto> criarProjetoSemArquivo(@RequestBody Projeto projeto) {
-        // Processa o projeto sem arquivo
-        System.out.println("Descrição recebida: " + projeto.getDescricao());
-
-        Projeto projetoSalvo = projetoService.salvarProjeto(projeto);
-        return ResponseEntity.ok(projetoSalvo);
-    }
-
     @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<Projeto> criarProjetoComArquivo(
+    public ResponseEntity<String> criarProjeto(
             @RequestParam("projeto") String projetoJson,
-            @RequestParam("arquivo") MultipartFile arquivo) {
+            @RequestParam(value = "planosDeTrabalho", required = false) MultipartFile planosDeTrabalho,
+            @RequestParam(value = "contratos", required = false) MultipartFile contratos,
+            @RequestParam(value = "termosAditivos", required = false) MultipartFile termosAditivos) throws IOException {
+
+        // Configurando o ObjectMapper para suportar LocalDate
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Para garantir o formato ISO de datas
+        objectMapper.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE); // Desabilitar ajustes automáticos de timezone
 
         // Converter JSON para o objeto Projeto
-        ObjectMapper objectMapper = new ObjectMapper();
         Projeto projeto;
         try {
             projeto = objectMapper.readValue(projetoJson, Projeto.class);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body("Erro ao converter JSON para objeto Projeto: " + e.getMessage());
         }
 
-        // Salvar arquivo e associar ao projeto
-        String nomeArquivo = projetoService.salvarArquivo(arquivo);
-        projeto.setNomeArquivo(nomeArquivo);
+        // Salvar os arquivos e associá-los ao projeto, se presentes
+        if (planosDeTrabalho != null && !planosDeTrabalho.isEmpty()) {
+            String nomeArquivo = projetoService.salvarArquivo(planosDeTrabalho);
+            projeto.setNomeArquivoPlanosDeTrabalho(nomeArquivo);
+        }
+
+        if (contratos != null && !contratos.isEmpty()) {
+            String nomeArquivo = projetoService.salvarArquivo(contratos);
+            projeto.setNomeArquivoContratos(nomeArquivo);
+        }
+
+        if (termosAditivos != null && !termosAditivos.isEmpty()) {
+            String nomeArquivo = projetoService.salvarArquivo(termosAditivos);
+            projeto.setNomeArquivoTermosAditivos(nomeArquivo);
+        }
+
+        // Salvar o projeto
         Projeto projetoSalvo = projetoService.salvarProjeto(projeto);
-
-        return ResponseEntity.ok(projetoSalvo);
+        return ResponseEntity.ok("Projeto criado com sucesso!");
     }
-
 
     @GetMapping
     public List<Projeto> listarProjetos() {

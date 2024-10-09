@@ -1,11 +1,14 @@
 package com.api.portaldatransparencia.service;
 
+import java.io.IOException;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -98,25 +101,14 @@ public class ProjetoService {
         projetoRepository.deleteById(id);
     }
 
-    private final String pastaUpload = "uploads/";
+    @Value("${diretorio.upload}")
+    private String diretorioUpload;
 
-    public String salvarArquivo(MultipartFile arquivo) {
-        try {
-            // Criar diretório se não existir
-            Path pasta = Paths.get(pastaUpload);
-            if (!Files.exists(pasta)) {
-                Files.createDirectories(pasta);
-            }
-
-            // Salvar o arquivo
-            String nomeArquivo = arquivo.getOriginalFilename();
-            Path caminhoArquivo = pasta.resolve(nomeArquivo);
-            Files.copy(arquivo.getInputStream(), caminhoArquivo);
-
-            return nomeArquivo;
-        } catch (Exception e) {
-            throw new RuntimeException("Erro ao salvar o arquivo", e);
-        }
+    public String salvarArquivo(MultipartFile file) throws IOException {
+        String nomeArquivo = file.getOriginalFilename();
+        Path caminho = Paths.get(diretorioUpload + nomeArquivo);
+        Files.copy(file.getInputStream(), caminho, StandardCopyOption.REPLACE_EXISTING);
+        return caminho.toString();
     }
 
     // Salvar projeto (com o arquivo associado)

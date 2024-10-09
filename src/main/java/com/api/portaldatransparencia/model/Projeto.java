@@ -42,7 +42,13 @@ public class Projeto {
 	private double valor;
 
 	@Column (nullable = true)
-	private String nomeArquivo;
+	private String NomeArquivoPlanosDeTrabalho;
+
+	@Column (nullable = true)
+	private String NomeArquivoContratos;
+
+	@Column (nullable = true)
+	private String NomeArquivoTermosAditivos;
 
 	// Getters e Setters
 	public Projeto() {}
@@ -132,14 +138,6 @@ public class Projeto {
 		this.valor = valor;
 	}
 
-	public String getNomeArquivo() {
-		return nomeArquivo;
-	}
-
-	public void setNomeArquivo(String nomeArquivo) {
-		this.nomeArquivo = nomeArquivo;
-	}
-
 	public String getDescricao() {
 		return descricao;
 	}
@@ -148,4 +146,27 @@ public class Projeto {
 		this.descricao = descricao;
 	}
 
+	public String getNomeArquivoPlanosDeTrabalho() {
+		return NomeArquivoPlanosDeTrabalho;
+	}
+
+	public void setNomeArquivoPlanosDeTrabalho(String nomeArquivoPlanosDeTrabalho) {
+		NomeArquivoPlanosDeTrabalho = nomeArquivoPlanosDeTrabalho;
+	}
+
+	public String getNomeArquivoContratos() {
+		return NomeArquivoContratos;
+	}
+
+	public void setNomeArquivoContratos(String nomeArquivoContratos) {
+		NomeArquivoContratos = nomeArquivoContratos;
+	}
+
+	public String getNomeArquivoTermosAditivos() {
+		return NomeArquivoTermosAditivos;
+	}
+
+	public void setNomeArquivoTermosAditivos(String nomeArquivoTermosAditivos) {
+		NomeArquivoTermosAditivos = nomeArquivoTermosAditivos;
+	}
 }
