@@ -1,13 +1,15 @@
 package com.api.portaldatransparencia.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
 
 @Entity
-public class Usuario {
+public class Usuario implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,16 +21,17 @@ public class Usuario {
     @Column(nullable = false)
     private String senha;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String tipo;
+    private UsuarioRole role;
 
     public Usuario() {
     }
 
-    public Usuario(String email, String senha, String tipo) {
+    public Usuario(String email, String senha, UsuarioRole role) {
         this.email = email;
         this.senha = senha;
-        this.tipo = tipo;
+        this.role = role;
     }
 
     public Long getId() {
@@ -55,11 +58,53 @@ public class Usuario {
         this.senha = senha;
     }
 
-    public String getTipo() {
-        return tipo;
+    public UsuarioRole getRole() {
+        return role;
     }
 
-    public void setTipo(String tipo) {
-        this.tipo = tipo;
+    public void setRole(UsuarioRole role) {
+        this.role = role;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if (role == UsuarioRole.ROLE_ADMIN) {
+            return List.of(
+                    new SimpleGrantedAuthority(UsuarioRole.ROLE_ADMIN.name()),
+                    new SimpleGrantedAuthority(UsuarioRole.ROLE_USER.name())
+            );
+        } else {
+            return List.of(new SimpleGrantedAuthority(UsuarioRole.ROLE_USER.name()));
+        }
+    }
+
+    @Override
+    public String getPassword() {
+        return senha;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
     }
 }

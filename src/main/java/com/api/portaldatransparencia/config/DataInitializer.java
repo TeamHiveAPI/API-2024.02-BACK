@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.api.portaldatransparencia.model.Usuario;
+import com.api.portaldatransparencia.model.UsuarioRole;
 import com.api.portaldatransparencia.service.UsuarioService;
 
 @Configuration
@@ -21,7 +22,7 @@ public class DataInitializer {
                 Usuario usuario = new Usuario();
                 usuario.setEmail("admin@example.com");
                 usuario.setSenha("Admin@123");
-                usuario.setTipo("admin");
+                usuario.setRole(UsuarioRole.ROLE_ADMIN); // Ajustado para usar enum
                 try {
                     usuarioService.salvarUsuario(usuario);
                     System.out.println("Usuário admin inicializado.");

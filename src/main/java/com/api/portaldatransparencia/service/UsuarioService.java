@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import com.api.portaldatransparencia.model.UsuarioRole;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.api.portaldatransparencia.model.Usuario;
@@ -27,10 +29,20 @@ public class UsuarioService {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     public Usuario salvarUsuario(Usuario usuario) {
         if (!validarSenha(usuario.getSenha())) {
             throw new IllegalArgumentException("Senha inválida: deve conter pelo menos 8 caracteres, uma letra maiúscula, um número e um caractere especial.");
         }
+
+        // Criptografa a senha antes de salvar
+        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+
+        // Setando role no cadastro para admin
+        usuario.setRole(UsuarioRole.ROLE_ADMIN);
+
         return usuarioRepository.save(usuario);
     }
 
