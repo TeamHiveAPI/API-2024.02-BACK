@@ -1,9 +1,6 @@
 package com.api.portaldatransparencia.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.*;
 import org.springframework.data.annotation.Id;
 
 @Entity
@@ -19,6 +16,22 @@ public class Arquivo {
 
 	@Column(nullable = false)
 	private String url;
+
+	@Column(nullable = false)
+	@Enumerated(EnumType.STRING)
+	private TipoDocumento tipoDocumento;
+
+	@ManyToOne
+	@JoinColumn(name = "projeto_id", nullable = false)  // FK para a tabela projeto
+	private Projeto projeto;
+
+	public Projeto getProjeto() {
+		return projeto;
+	}
+
+	public void setProjeto(Projeto projeto) {
+		this.projeto = projeto;
+	}
 
 	public Long getId() {
 		return id;
@@ -42,5 +55,13 @@ public class Arquivo {
 
 	public void setUrl(String url) {
 		this.url = url;
+	}
+
+	public TipoDocumento getTipoDocumento() {
+		return tipoDocumento;
+	}
+
+	public void setTipoDocumento(TipoDocumento tipoDocumento) {
+		this.tipoDocumento = tipoDocumento;
 	}
 }

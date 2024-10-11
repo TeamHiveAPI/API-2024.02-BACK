@@ -1,11 +1,10 @@
 package com.api.portaldatransparencia.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
 import java.time.LocalDate;
-import jakarta.persistence.Column;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 public class Projeto {
@@ -41,14 +40,18 @@ public class Projeto {
 	@Column (nullable = false)
 	private double valor;
 
-	@Column (nullable = true)
-	private String NomeArquivoPlanosDeTrabalho;
+	@OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Arquivo> arquivos = new ArrayList<>();
 
-	@Column (nullable = true)
-	private String NomeArquivoContratos;
+	public void addArquivo(Arquivo arquivo) {
+		arquivos.add(arquivo);
+		arquivo.setProjeto(this);
+	}
 
-	@Column (nullable = true)
-	private String NomeArquivoTermosAditivos;
+	public void removeArquivo(Arquivo arquivo) {
+		arquivos.remove(arquivo);
+		arquivo.setProjeto(null);
+	}
 
 	// Getters e Setters
 	public Projeto() {}
@@ -144,29 +147,5 @@ public class Projeto {
 
 	public void setDescricao(String descricao) {
 		this.descricao = descricao;
-	}
-
-	public String getNomeArquivoPlanosDeTrabalho() {
-		return NomeArquivoPlanosDeTrabalho;
-	}
-
-	public void setNomeArquivoPlanosDeTrabalho(String nomeArquivoPlanosDeTrabalho) {
-		NomeArquivoPlanosDeTrabalho = nomeArquivoPlanosDeTrabalho;
-	}
-
-	public String getNomeArquivoContratos() {
-		return NomeArquivoContratos;
-	}
-
-	public void setNomeArquivoContratos(String nomeArquivoContratos) {
-		NomeArquivoContratos = nomeArquivoContratos;
-	}
-
-	public String getNomeArquivoTermosAditivos() {
-		return NomeArquivoTermosAditivos;
-	}
-
-	public void setNomeArquivoTermosAditivos(String nomeArquivoTermosAditivos) {
-		NomeArquivoTermosAditivos = nomeArquivoTermosAditivos;
 	}
 }

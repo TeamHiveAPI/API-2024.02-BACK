@@ -2,9 +2,12 @@ package com.api.portaldatransparencia.controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import com.api.portaldatransparencia.model.Arquivo;
+import com.api.portaldatransparencia.model.TipoDocumento;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -36,41 +39,49 @@ public class ProjetoController {
     @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<String> criarProjeto(
             @RequestParam("projeto") String projetoJson,
-            @RequestParam(value = "planosDeTrabalho", required = false) MultipartFile planosDeTrabalho,
-            @RequestParam(value = "contratos", required = false) MultipartFile contratos,
-            @RequestParam(value = "termosAditivos", required = false) MultipartFile termosAditivos) throws IOException {
+            @RequestParam(value = "planosDeTrabalho", required = false) MultipartFile[] planosDeTrabalho,
+            @RequestParam(value = "contratos", required = false) MultipartFile[] contratos,
+            @RequestParam(value = "termosAditivos", required = false) MultipartFile[] termosAditivos) throws IOException {
 
-        // Configurando o ObjectMapper para suportar LocalDate
+        // Configurar o ObjectMapper como antes
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS); // Para garantir o formato ISO de datas
-        objectMapper.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE); // Desabilitar ajustes automáticos de timezone
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
 
-        // Converter JSON para o objeto Projeto
+        // Log para verificar o conteúdo dos arquivos
+        System.out.println("Planos de Trabalho: " + (planosDeTrabalho != null ? planosDeTrabalho.length : "null"));
+        System.out.println("Contratos: " + (contratos != null ? contratos.length : "null"));
+        System.out.println("Termos Aditivos: " + (termosAditivos != null ? termosAditivos.length : "null"));
+
+        // Converter JSON para objeto Projeto
         Projeto projeto;
         try {
             projeto = objectMapper.readValue(projetoJson, Projeto.class);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erro ao converter JSON para objeto Projeto: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Erro ao converter JSON: " + e.getMessage());
         }
 
-        // Salvar os arquivos e associá-los ao projeto, se presentes
-        if (planosDeTrabalho != null && !planosDeTrabalho.isEmpty()) {
-            String nomeArquivo = projetoService.salvarArquivo(planosDeTrabalho);
-            projeto.setNomeArquivoPlanosDeTrabalho(nomeArquivo);
+        System.out.println("Projeto recebido: " + projeto.getReferencia());
+
+        // Salvar múltiplos arquivos
+        if (planosDeTrabalho != null && planosDeTrabalho.length > 0) {
+            System.out.println("Salvando planos de trabalho...");
+            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(planosDeTrabalho), TipoDocumento.PLANO_DE_TRABALHO);
         }
 
-        if (contratos != null && !contratos.isEmpty()) {
-            String nomeArquivo = projetoService.salvarArquivo(contratos);
-            projeto.setNomeArquivoContratos(nomeArquivo);
+        if (contratos != null && contratos.length > 0) {
+            System.out.println("Salvando contratos...");
+            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(contratos), TipoDocumento.CONTRATO);
         }
 
-        if (termosAditivos != null && !termosAditivos.isEmpty()) {
-            String nomeArquivo = projetoService.salvarArquivo(termosAditivos);
-            projeto.setNomeArquivoTermosAditivos(nomeArquivo);
+        if (termosAditivos != null && termosAditivos.length > 0) {
+            System.out.println("Salvando termos aditivos...");
+            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(termosAditivos), TipoDocumento.TERMO_ADITIVO);
         }
 
         // Salvar o projeto
+        System.out.println("Salvando projeto final...");
         Projeto projetoSalvo = projetoService.salvarProjeto(projeto);
         return ResponseEntity.ok("Projeto criado com sucesso!");
     }

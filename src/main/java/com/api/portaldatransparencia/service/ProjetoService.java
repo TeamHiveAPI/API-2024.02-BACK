@@ -7,9 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.api.portaldatransparencia.model.Arquivo;
+import com.api.portaldatransparencia.model.TipoDocumento;
+import com.api.portaldatransparencia.repository.ArquivoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.api.portaldatransparencia.model.Projeto;
@@ -27,10 +31,14 @@ import java.nio.file.Paths;
 import java.nio.file.Files;
 
 @Service
+@Transactional
 public class ProjetoService {
 
     @Autowired
     private ProjetoRepository projetoRepository;
+
+    @Autowired
+    private ArquivoRepository arquivoRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -111,10 +119,56 @@ public class ProjetoService {
         return caminho.toString();
     }
 
-    // Salvar projeto (com o arquivo associado)
-    public Projeto salvarProjetoComArquivo(Projeto projeto) {
-        // Implementação do método para salvar o projeto
-        return projetoRepository.save(projeto);
+    public void salvarProjetoComArquivos(Projeto projeto, List<MultipartFile> arquivos, TipoDocumento tipoDocumento) throws IOException {
+        // Primeiro, salva o projeto para garantir que ele tenha um ID
+        Projeto projetoSalvo = projetoRepository.save(projeto);
+        System.out.println("Projeto salvo com ID: " + projetoSalvo.getId());
+
+        // Agora, adiciona os arquivos ao projeto salvo
+        for (MultipartFile arquivo : arquivos) {
+            String urlArquivo = saveFileToStorage(arquivo);  // Salvar o arquivo no sistema de arquivos
+            if (urlArquivo == null) {
+                System.out.println("Falha ao salvar o arquivo " + arquivo.getOriginalFilename());
+                continue;  // Pula para o próximo arquivo se falhar ao salvar
+            }
+
+            // Criar o objeto Arquivo e associar ao projeto
+            Arquivo novoArquivo = new Arquivo();
+            novoArquivo.setNome(arquivo.getOriginalFilename());
+            novoArquivo.setUrl(urlArquivo);  // Define a URL do arquivo salvo
+            novoArquivo.setTipoDocumento(tipoDocumento);
+            novoArquivo.setProjeto(projetoSalvo);  // Associa o arquivo ao projeto salvo
+
+            arquivoRepository.save(novoArquivo);  // Salvar o arquivo no repositório de Arquivo
+            System.out.println("Arquivo salvo: " + novoArquivo.getNome());
+
+            projetoSalvo.addArquivo(novoArquivo);  // Adicionar o arquivo ao projeto
+        }
+
+        // Salva o projeto novamente para garantir a associação dos arquivos
+        projetoRepository.save(projetoSalvo);
+        System.out.println("Arquivos associados e projeto salvo com arquivos.");
+    }
+
+
+    private String saveFileToStorage(MultipartFile file) {
+        String folder = "src/main/resources/static/uploads/";
+        Path path = Paths.get(folder + file.getOriginalFilename());
+
+        try {
+            // Criar os diretórios caso ainda não existam
+            Files.createDirectories(path.getParent());
+
+            // Salvar o arquivo no diretório
+            Files.write(path, file.getBytes());
+        } catch (IOException e) {
+            // Log do erro e retorno nulo se houver falha
+            e.printStackTrace();
+            return null;  // Retorna null em caso de erro
+        }
+
+        // Retornar o caminho completo do arquivo salvo
+        return path.toString();
     }
 
 }
