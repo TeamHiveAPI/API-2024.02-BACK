@@ -148,4 +148,20 @@ public class Projeto {
 	public void setDescricao(String descricao) {
 		this.descricao = descricao;
 	}
+
+	public List<Arquivo> getArquivos() {
+		return arquivos;
+	}
+
+	public void setArquivos(List<Arquivo> novosArquivos) {
+		// Remover os arquivos que não estão mais presentes
+		arquivos.removeIf(a -> !novosArquivos.contains(a));
+
+		// Adicionar novos arquivos
+		for (Arquivo novoArquivo : novosArquivos) {
+			if (!arquivos.contains(novoArquivo)) {
+				addArquivo(novoArquivo);
+			}
+		}
+	}
 }

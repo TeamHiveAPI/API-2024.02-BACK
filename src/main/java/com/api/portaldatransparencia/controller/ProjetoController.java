@@ -2,6 +2,7 @@ package com.api.portaldatransparencia.controller;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -118,12 +119,50 @@ public class ProjetoController {
         return ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Projeto> atualizarProjeto(@PathVariable Long id, @RequestBody Projeto projeto) {
-        if (projetoService.buscarProjetoPorId(id).isPresent()) {
-            projeto.setId(id);
-            return ResponseEntity.ok(projetoService.salvarProjeto(projeto));
+    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    public ResponseEntity<String> atualizarProjeto(
+            @PathVariable Long id,
+            @RequestParam("projeto") String projetoJson,
+            @RequestParam(value = "planosDeTrabalho", required = false) MultipartFile[] planosDeTrabalho,
+            @RequestParam(value = "contratos", required = false) MultipartFile[] contratos,
+            @RequestParam(value = "termosAditivos", required = false) MultipartFile[] termosAditivos,
+            @RequestParam(value = "arquivosRemovidos", required = false) String arquivosRemovidosJson) throws IOException {
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        objectMapper.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
+
+        // Converter JSON para objeto Projeto
+        Projeto projetoAtualizado;
+        try {
+            projetoAtualizado = objectMapper.readValue(projetoJson, Projeto.class);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao converter JSON: " + e.getMessage());
         }
-        return ResponseEntity.notFound().build();
+
+        // Converter JSON de arquivos removidos para uma lista de Strings
+        List<String> arquivosRemovidos = new ArrayList<>();
+        try {
+            if (arquivosRemovidosJson != null && !arquivosRemovidosJson.isEmpty()) {
+                arquivosRemovidos = Arrays.asList(objectMapper.readValue(arquivosRemovidosJson, String[].class));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao converter arquivos removidos: " + e.getMessage());
+        }
+
+        // Se algum dos arrays for nulo, inicializar como uma lista vazia
+        List<MultipartFile> planosDeTrabalhoList = planosDeTrabalho != null ? Arrays.asList(planosDeTrabalho) : new ArrayList<>();
+        List<MultipartFile> contratosList = contratos != null ? Arrays.asList(contratos) : new ArrayList<>();
+        List<MultipartFile> termosAditivosList = termosAditivos != null ? Arrays.asList(termosAditivos) : new ArrayList<>();
+
+        // Atualizar projeto e arquivos associados
+        try {
+            projetoService.atualizarProjeto(id, projetoAtualizado, planosDeTrabalhoList, contratosList, termosAditivosList, arquivosRemovidos);
+            return ResponseEntity.ok("Projeto atualizado com sucesso!");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Erro ao atualizar projeto: " + e.getMessage());
+        }
     }
+
 }

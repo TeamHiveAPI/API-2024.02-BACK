@@ -1,5 +1,6 @@
 package com.api.portaldatransparencia.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import org.springframework.data.annotation.Id;
 
@@ -22,7 +23,8 @@ public class Arquivo {
 	private TipoDocumento tipoDocumento;
 
 	@ManyToOne
-	@JoinColumn(name = "projeto_id", nullable = false)  // FK para a tabela projeto
+	@JoinColumn(name = "projeto_id", nullable = false) // FK para a tabela projeto
+	@JsonIgnore
 	private Projeto projeto;
 
 	public Projeto getProjeto() {

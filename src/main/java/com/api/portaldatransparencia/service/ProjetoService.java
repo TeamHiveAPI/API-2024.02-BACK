@@ -93,21 +93,132 @@ public class ProjetoService {
 
     // Buscar Projeto por ID
     public Optional<Projeto> buscarProjetoPorId(Long id) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Projeto> cq = cb.createQuery(Projeto.class);
-        Root<Projeto> projeto = cq.from(Projeto.class);
+        // Busca o projeto pelo ID
+        Optional<Projeto> projetoOpt = projetoRepository.findById(id);
 
-        Predicate idPredicate = cb.equal(projeto.get("id"), id);
-        cq.where(idPredicate);
+        // Se o projeto for encontrado, buscar os arquivos associados
+        if (projetoOpt.isPresent()) {
+            Projeto projeto = projetoOpt.get();
 
-        Projeto resultado = entityManager.createQuery(cq).getSingleResult();
-        return Optional.ofNullable(resultado);
+            // Busca os arquivos associados ao projeto pelo ID do projeto
+            List<Arquivo> arquivos = arquivoRepository.findByProjetoId(projeto.getId());
+
+            // Define os arquivos no projeto
+            projeto.setArquivos(arquivos);
+
+            // Retorna o projeto com os arquivos
+            return Optional.of(projeto);
+        }
+
+        // Caso o projeto não seja encontrado, retorna Optional vazio
+        return Optional.empty();
     }
 
     // Deletar Projeto
     public void deletarProjeto(Long id) {
-        projetoRepository.deleteById(id);
+        Optional<Projeto> projetoOpt = projetoRepository.findById(id);
+        if (projetoOpt.isPresent()) {
+            Projeto projeto = projetoOpt.get();
+            // Deleta os arquivos do sistema de arquivos
+            for (Arquivo arquivo : projeto.getArquivos()) {
+                Path filePath = Paths.get(arquivo.getUrl());
+                try {
+                    Files.deleteIfExists(filePath);
+                } catch (IOException e) {
+                    e.printStackTrace();  // Log de erro se não conseguir deletar o arquivo
+                }
+                // Remover o arquivo do banco de dados
+                arquivoRepository.delete(arquivo);
+            }
+            // Remover o projeto do banco de dados
+            projetoRepository.delete(projeto);
+        }
     }
+
+    public void atualizarProjeto(Long id, Projeto projetoAtualizado,
+                                 List<MultipartFile> planosDeTrabalho,
+                                 List<MultipartFile> contratos,
+                                 List<MultipartFile> termosAditivos,
+                                 List<String> arquivosRemovidos) throws IOException {
+        // Carregar o projeto existente do banco de dados
+        Optional<Projeto> projetoExistenteOpt = projetoRepository.findById(id);
+        if (projetoExistenteOpt.isEmpty()) {
+            throw new RuntimeException("Projeto não encontrado.");
+        }
+
+        Projeto projetoExistente = projetoExistenteOpt.get();
+
+        // Atualizar os campos do projeto existente
+        projetoExistente.setReferencia(projetoAtualizado.getReferencia());
+        projetoExistente.setDescricao(projetoAtualizado.getDescricao());
+        projetoExistente.setCoordenador(projetoAtualizado.getCoordenador());
+        projetoExistente.setDataInicio(projetoAtualizado.getDataInicio());
+        projetoExistente.setDataTermino(projetoAtualizado.getDataTermino());
+        projetoExistente.setValor(projetoAtualizado.getValor());
+
+        // Remover arquivos
+        if (arquivosRemovidos != null && !arquivosRemovidos.isEmpty()) {
+            for (String nomeArquivo : arquivosRemovidos) {
+                Arquivo arquivoParaRemover = projetoExistente.getArquivos()
+                        .stream()
+                        .filter(a -> a.getNome().equals(nomeArquivo))
+                        .findFirst()
+                        .orElse(null);
+                if (arquivoParaRemover != null) {
+                    projetoExistente.removeArquivo(arquivoParaRemover);  // Remove da coleção
+                    arquivoRepository.delete(arquivoParaRemover);  // Exclui do banco de dados
+                    // Remover o arquivo do sistema de arquivos (opcional)
+                    Files.deleteIfExists(Paths.get(arquivoParaRemover.getUrl()));
+                }
+            }
+        }
+
+        // Manter a coleção de arquivos existente
+        List<Arquivo> arquivosExistentes = projetoExistente.getArquivos();
+
+        // Adicionar novos arquivos de Planos de Trabalho
+        if (planosDeTrabalho != null) {
+            for (MultipartFile arquivo : planosDeTrabalho) {
+                String urlArquivo = saveFileToStorage(arquivo);
+                Arquivo novoArquivo = new Arquivo();
+                novoArquivo.setNome(arquivo.getOriginalFilename());
+                novoArquivo.setUrl(urlArquivo);
+                novoArquivo.setTipoDocumento(TipoDocumento.PLANO_DE_TRABALHO);
+                novoArquivo.setProjeto(projetoExistente);
+                arquivosExistentes.add(novoArquivo);
+            }
+        }
+
+        // Adicionar novos arquivos de Contratos
+        if (contratos != null) {
+            for (MultipartFile arquivo : contratos) {
+                String urlArquivo = saveFileToStorage(arquivo);
+                Arquivo novoArquivo = new Arquivo();
+                novoArquivo.setNome(arquivo.getOriginalFilename());
+                novoArquivo.setUrl(urlArquivo);
+                novoArquivo.setTipoDocumento(TipoDocumento.CONTRATO);
+                novoArquivo.setProjeto(projetoExistente);
+                arquivosExistentes.add(novoArquivo);
+            }
+        }
+
+        // Adicionar novos arquivos de Termos Aditivos
+        if (termosAditivos != null) {
+            for (MultipartFile arquivo : termosAditivos) {
+                String urlArquivo = saveFileToStorage(arquivo);
+                Arquivo novoArquivo = new Arquivo();
+                novoArquivo.setNome(arquivo.getOriginalFilename());
+                novoArquivo.setUrl(urlArquivo);
+                novoArquivo.setTipoDocumento(TipoDocumento.TERMO_ADITIVO);
+                novoArquivo.setProjeto(projetoExistente);
+                arquivosExistentes.add(novoArquivo);
+            }
+        }
+
+        // Salvar o projeto atualizado com a coleção de arquivos
+        projetoRepository.save(projetoExistente);
+    }
+
 
     @Value("${diretorio.upload}")
     private String diretorioUpload;
