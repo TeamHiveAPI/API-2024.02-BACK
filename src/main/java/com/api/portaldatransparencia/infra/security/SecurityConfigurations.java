@@ -33,6 +33,9 @@ public class SecurityConfigurations {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/usuarios/cadastro").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/projetos").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/projetos/search").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/projetos/{id}").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
