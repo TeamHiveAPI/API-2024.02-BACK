@@ -260,12 +260,24 @@ public class ProjetoService {
 
         // Filtrar pela data de início
         if (dataInicio != null && !dataInicio.isEmpty()) {
-            predicates.add(cb.equal(projeto.get("dataInicio"), LocalDate.parse(dataInicio)));
+            try {
+                LocalDate dataInicioFormatada = LocalDate.parse(dataInicio); // Converter string para LocalDate
+                predicates.add(cb.equal(projeto.get("dataInicio"), dataInicioFormatada));
+            } catch (Exception e) {
+                // Tratar o erro de formatação de data, se necessário
+                e.printStackTrace();
+            }
         }
 
         // Filtrar pela data de término
         if (dataTermino != null && !dataTermino.isEmpty()) {
-            predicates.add(cb.equal(projeto.get("dataTermino"), LocalDate.parse(dataTermino)));
+            try {
+                LocalDate dataTerminoFormatada = LocalDate.parse(dataTermino); // Converter string para LocalDate
+                predicates.add(cb.equal(projeto.get("dataTermino"), dataTerminoFormatada));
+            } catch (Exception e) {
+                // Tratar o erro de formatação de data, se necessário
+                e.printStackTrace();
+            }
         }
 
         // Filtrar por termo geral
