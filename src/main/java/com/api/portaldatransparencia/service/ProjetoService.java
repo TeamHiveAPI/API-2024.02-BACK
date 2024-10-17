@@ -150,7 +150,7 @@ public class ProjetoService {
         Projeto projetoExistente = projetoExistenteOpt.get();
 
         // Atualizar os campos do projeto existente
-        projetoExistente.setReferencia(projetoAtualizado.getReferencia());
+        projetoExistente.setTitulo(projetoAtualizado.getTitulo());
         projetoExistente.setDescricao(projetoAtualizado.getDescricao());
         projetoExistente.setCoordenador(projetoAtualizado.getCoordenador());
         projetoExistente.setDataInicio(projetoAtualizado.getDataInicio());
@@ -295,7 +295,7 @@ public class ProjetoService {
             }
 
             predicates.add(cb.or(
-                cb.like(cb.lower(projeto.get("referencia")), "%" + termo.toLowerCase() + "%"),
+                cb.like(cb.lower(projeto.get("titulo")), "%" + termo.toLowerCase() + "%"),
                 cb.like(cb.lower(projeto.get("coordenador")), "%" + termo.toLowerCase() + "%"),
                 cb.like(cb.lower(projeto.get("descricao")), "%" + termo.toLowerCase() + "%"),
                 cb.like(cb.lower(projeto.get("situacao")), "%" + termo.toLowerCase() + "%"),

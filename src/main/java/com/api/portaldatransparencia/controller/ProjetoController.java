@@ -64,7 +64,7 @@ public class ProjetoController {
             return ResponseEntity.badRequest().body("Erro ao converter JSON: " + e.getMessage());
         }
 
-        System.out.println("Projeto recebido: " + projeto.getReferencia());
+        System.out.println("Projeto recebido: " + projeto.getTitulo());
 
         // Salvar múltiplos arquivos
         if (planosDeTrabalho != null && planosDeTrabalho.length > 0) {

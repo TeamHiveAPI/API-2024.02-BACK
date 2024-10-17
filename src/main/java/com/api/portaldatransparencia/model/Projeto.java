@@ -14,7 +14,7 @@ public class Projeto {
 	private Long id;
 
 	@Column (nullable = false)
-	private String referencia;
+	private String titulo;
 
 	@Column (nullable = false)
 	private String coordenador;
@@ -56,9 +56,9 @@ public class Projeto {
 	// Getters e Setters
 	public Projeto() {}
 
-	public Projeto(String referencia, String coordenador, String descricao, LocalDate dataInicio, LocalDate dataTermino,
+	public Projeto(String titulo, String coordenador, String descricao, LocalDate dataInicio, LocalDate dataTermino,
 	               String classificacao, String situacao, String empresa, double valor) {
-		this.referencia = referencia;
+		this.titulo = titulo;
 		this.coordenador = coordenador;
 		this.descricao = descricao;
 		this.dataInicio = dataInicio;
@@ -77,12 +77,12 @@ public class Projeto {
 		this.id = id;
 	}
 
-	public String getReferencia() {
-		return referencia;
+	public String getTitulo() {
+		return titulo;
 	}
 
-	public void setReferencia(String referencia) {
-		this.referencia = referencia;
+	public void setTitulo(String titulo) {
+		this.titulo = titulo;
 	}
 
 	public String getCoordenador() {

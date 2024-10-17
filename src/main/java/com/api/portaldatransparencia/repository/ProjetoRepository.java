@@ -11,7 +11,7 @@ import java.util.List;
 public interface ProjetoRepository extends JpaRepository<Projeto, Long> {
 
     @Query("SELECT p FROM Projeto p WHERE " +
-            "(:referencia IS NULL OR LOWER(p.referencia) LIKE LOWER(CONCAT('%', :referencia, '%'))) AND " +
+            "(:referencia IS NULL OR LOWER(p.titulo) LIKE LOWER(CONCAT('%', :referencia, '%'))) AND " +
             "(:coordenador IS NULL OR LOWER(p.coordenador) LIKE LOWER(CONCAT('%', :coordenador, '%'))) AND " +
             "(:dataInicio IS NULL OR p.dataInicio >= :dataInicio) AND " +
             "(:dataTermino IS NULL OR p.dataTermino <= :dataTermino) AND " +
