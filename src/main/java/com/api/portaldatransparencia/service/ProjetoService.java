@@ -52,46 +52,6 @@ public class ProjetoService {
         return projetoRepository.findAll();
     }
 
-    // Buscar Projetos com filtros dinâmicos
-    public List<Projeto> buscarProjetos(String referencia, String coordenador, LocalDate dataInicio,
-            LocalDate dataTermino, String classificacao, String situacao) {
-        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-        CriteriaQuery<Projeto> cq = cb.createQuery(Projeto.class);
-        Root<Projeto> projeto = cq.from(Projeto.class);
-
-        List<Predicate> predicates = new ArrayList<>();
-
-        if (referencia != null && !referencia.isEmpty()) {
-            predicates.add(cb.like(cb.lower(projeto.get("referencia")), "%" + referencia.toLowerCase() + "%"));
-        }
-
-        if (coordenador != null && !coordenador.isEmpty()) {
-            predicates.add(cb.like(cb.lower(projeto.get("coordenador")), "%" + coordenador.toLowerCase() + "%"));
-        }
-
-        if (dataInicio != null) {
-            predicates.add(cb.greaterThanOrEqualTo(projeto.get("dataInicio"), dataInicio));
-        }
-
-        if (dataTermino != null) {
-            predicates.add(cb.lessThanOrEqualTo(projeto.get("dataTermino"), dataTermino));
-        }
-
-        if (classificacao != null && !classificacao.isEmpty()) {
-            predicates.add(cb.equal(projeto.get("classificacao"), classificacao));
-        }
-
-        if (situacao != null && !situacao.isEmpty()) {
-            predicates.add(cb.equal(projeto.get("situacao"), situacao));
-        }
-
-        if (!predicates.isEmpty()) {
-            cq.where(predicates.toArray(new Predicate[0]));
-        }
-
-        return entityManager.createQuery(cq).getResultList();
-    }
-
     // Buscar Projeto por ID
     public Optional<Projeto> buscarProjetoPorId(Long id) {
         // Busca o projeto pelo ID
@@ -276,41 +236,49 @@ public class ProjetoService {
         return path.toString();
     }
 
-    public List<Projeto> buscarProjetosPorTermo(String termo) {
+    public List<Projeto> buscarProjetosPorCampos(String titulo, String coordenador, String contratante, String dataInicio, String dataTermino, String termo) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Projeto> cq = cb.createQuery(Projeto.class);
         Root<Projeto> projeto = cq.from(Projeto.class);
 
         List<Predicate> predicates = new ArrayList<>();
 
+        // Filtrar pelo título do projeto
+        if (titulo != null && !titulo.isEmpty()) {
+            predicates.add(cb.like(cb.lower(projeto.get("titulo")), "%" + titulo.toLowerCase() + "%"));
+        }
+
+        // Filtrar pelo coordenador
+        if (coordenador != null && !coordenador.isEmpty()) {
+            predicates.add(cb.like(cb.lower(projeto.get("coordenador")), "%" + coordenador.toLowerCase() + "%"));
+        }
+
+        // Filtrar pelo contratante
+        if (contratante != null && !contratante.isEmpty()) {
+            predicates.add(cb.like(cb.lower(projeto.get("empresa")), "%" + contratante.toLowerCase() + "%"));
+        }
+
+        // Filtrar pela data de início
+        if (dataInicio != null && !dataInicio.isEmpty()) {
+            predicates.add(cb.equal(projeto.get("dataInicio"), LocalDate.parse(dataInicio)));
+        }
+
+        // Filtrar pela data de término
+        if (dataTermino != null && !dataTermino.isEmpty()) {
+            predicates.add(cb.equal(projeto.get("dataTermino"), LocalDate.parse(dataTermino)));
+        }
+
+        // Filtrar por termo geral
         if (termo != null && !termo.isEmpty()) {
-            // Remover R$ e converter o termo para um número
-            String valorTermo = termo.replace("R$", "").replace(".", "").replace(",", ".").trim();
-            Double valorBusca = null;
-
-            try {
-                valorBusca = Double.parseDouble(valorTermo);
-            } catch (NumberFormatException e) {
-                // Se não for um número, apenas continue
-            }
-
             predicates.add(cb.or(
-                cb.like(cb.lower(projeto.get("titulo")), "%" + termo.toLowerCase() + "%"),
-                cb.like(cb.lower(projeto.get("coordenador")), "%" + termo.toLowerCase() + "%"),
-                cb.like(cb.lower(projeto.get("descricao")), "%" + termo.toLowerCase() + "%"),
-                cb.like(cb.lower(projeto.get("situacao")), "%" + termo.toLowerCase() + "%"),
-                cb.like(cb.lower(projeto.get("classificacao")), "%" + termo.toLowerCase() + "%"),
-                cb.like(cb.lower(projeto.get("empresa")), "%" + termo.toLowerCase() + "%")
+                    cb.like(cb.lower(projeto.get("descricao")), "%" + termo.toLowerCase() + "%"),
+                    cb.like(cb.lower(projeto.get("classificacao")), "%" + termo.toLowerCase() + "%")
             ));
-
-            // Adicionar condição para buscar pelo valor
-            if (valorBusca != null) {
-                predicates.add(cb.equal(projeto.get("valor"), valorBusca));
-            }
         }
 
         cq.where(predicates.toArray(new Predicate[0]));
         return entityManager.createQuery(cq).getResultList();
     }
+
 
 }

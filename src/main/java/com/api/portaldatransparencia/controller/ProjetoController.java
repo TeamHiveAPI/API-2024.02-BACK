@@ -102,9 +102,17 @@ public class ProjetoController {
     }
 
     @GetMapping("/search")
-    public List<Projeto> buscarProjetos(@RequestParam(required = false) String termo) {
-        return projetoService.buscarProjetosPorTermo(termo);
+    public List<Projeto> searchProjetos(
+            @RequestParam(required = false) String titulo,
+            @RequestParam(required = false) String coordenador,
+            @RequestParam(required = false) String contratante,
+            @RequestParam(required = false) String dataInicio,
+            @RequestParam(required = false) String dataTermino,
+            @RequestParam(required = false) String termo
+    ) {
+        return projetoService.buscarProjetosPorCampos(titulo, coordenador, contratante, dataInicio, dataTermino, termo);
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarProjeto(@PathVariable Long id) {
