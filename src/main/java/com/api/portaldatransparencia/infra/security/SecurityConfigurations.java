@@ -36,6 +36,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/projetos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/projetos/search").permitAll()
                         .requestMatchers(HttpMethod.GET, "/projetos/{id}").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/projetos/download/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class);
