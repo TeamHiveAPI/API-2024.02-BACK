@@ -184,6 +184,7 @@ public class ProjetoService {
                 Arquivo novoArquivo = new Arquivo();
                 novoArquivo.setNome(arquivo.getOriginalFilename());
                 novoArquivo.setUrl(urlArquivo);
+                novoArquivo.setTamanho(arquivo.getSize());
                 novoArquivo.setTipoDocumento(TipoDocumento.PLANO_DE_TRABALHO);
                 novoArquivo.setProjeto(projetoExistente);
                 arquivosExistentes.add(novoArquivo);
@@ -197,6 +198,7 @@ public class ProjetoService {
                 Arquivo novoArquivo = new Arquivo();
                 novoArquivo.setNome(arquivo.getOriginalFilename());
                 novoArquivo.setUrl(urlArquivo);
+                novoArquivo.setTamanho(arquivo.getSize());
                 novoArquivo.setTipoDocumento(TipoDocumento.CONTRATO);
                 novoArquivo.setProjeto(projetoExistente);
                 arquivosExistentes.add(novoArquivo);
@@ -210,6 +212,7 @@ public class ProjetoService {
                 Arquivo novoArquivo = new Arquivo();
                 novoArquivo.setNome(arquivo.getOriginalFilename());
                 novoArquivo.setUrl(urlArquivo);
+                novoArquivo.setTamanho(arquivo.getSize());
                 novoArquivo.setTipoDocumento(TipoDocumento.TERMO_ADITIVO);
                 novoArquivo.setProjeto(projetoExistente);
                 arquivosExistentes.add(novoArquivo);
@@ -218,16 +221,6 @@ public class ProjetoService {
 
         // Salvar o projeto atualizado com a coleção de arquivos
         projetoRepository.save(projetoExistente);
-    }
-
-    @Value("${diretorio.upload}")
-    private String diretorioUpload;
-
-    public String salvarArquivo(MultipartFile file) throws IOException {
-        String nomeArquivo = file.getOriginalFilename();
-        Path caminho = Paths.get(diretorioUpload + nomeArquivo);
-        Files.copy(file.getInputStream(), caminho, StandardCopyOption.REPLACE_EXISTING);
-        return caminho.toString();
     }
 
     public void salvarProjetoComArquivos(Projeto projeto, List<MultipartFile> arquivos, TipoDocumento tipoDocumento)
@@ -248,6 +241,7 @@ public class ProjetoService {
             Arquivo novoArquivo = new Arquivo();
             novoArquivo.setNome(arquivo.getOriginalFilename());
             novoArquivo.setUrl(urlArquivo); // Define a URL do arquivo salvo
+            novoArquivo.setTamanho(arquivo.getSize());
             novoArquivo.setTipoDocumento(tipoDocumento);
             novoArquivo.setProjeto(projetoSalvo); // Associa o arquivo ao projeto salvo
 

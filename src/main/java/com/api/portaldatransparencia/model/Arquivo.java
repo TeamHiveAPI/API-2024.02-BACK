@@ -27,6 +27,17 @@ public class Arquivo {
 	@JsonIgnore
 	private Projeto projeto;
 
+	@Column(nullable = false)
+	private Long tamanho;  // Novo campo para armazenar o tamanho do arquivo em bytes
+
+	public Long getTamanho() {
+		return tamanho;
+	}
+
+	public void setTamanho(Long tamanho) {
+		this.tamanho = tamanho;
+	}
+
 	public Projeto getProjeto() {
 		return projeto;
 	}
