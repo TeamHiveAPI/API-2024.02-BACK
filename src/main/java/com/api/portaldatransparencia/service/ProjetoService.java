@@ -53,7 +53,8 @@ public class ProjetoService {
     }
 
     // Buscar Projetos com filtros dinâmicos
-    public List<Projeto> buscarProjetos(String referencia, String coordenador, LocalDate dataInicio, LocalDate dataTermino, String classificacao, String situacao) {
+    public List<Projeto> buscarProjetos(String referencia, String coordenador, LocalDate dataInicio,
+            LocalDate dataTermino, String classificacao, String situacao) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Projeto> cq = cb.createQuery(Projeto.class);
         Root<Projeto> projeto = cq.from(Projeto.class);
@@ -125,7 +126,7 @@ public class ProjetoService {
                 try {
                     Files.deleteIfExists(filePath);
                 } catch (IOException e) {
-                    e.printStackTrace();  // Log de erro se não conseguir deletar o arquivo
+                    e.printStackTrace(); // Log de erro se não conseguir deletar o arquivo
                 }
                 // Remover o arquivo do banco de dados
                 arquivoRepository.delete(arquivo);
@@ -136,10 +137,10 @@ public class ProjetoService {
     }
 
     public void atualizarProjeto(Long id, Projeto projetoAtualizado,
-                                 List<MultipartFile> planosDeTrabalho,
-                                 List<MultipartFile> contratos,
-                                 List<MultipartFile> termosAditivos,
-                                 List<String> arquivosRemovidos) throws IOException {
+            List<MultipartFile> planosDeTrabalho,
+            List<MultipartFile> contratos,
+            List<MultipartFile> termosAditivos,
+            List<String> arquivosRemovidos) throws IOException {
         // Carregar o projeto existente do banco de dados
         Optional<Projeto> projetoExistenteOpt = projetoRepository.findById(id);
         if (projetoExistenteOpt.isEmpty()) {
@@ -165,8 +166,8 @@ public class ProjetoService {
                         .findFirst()
                         .orElse(null);
                 if (arquivoParaRemover != null) {
-                    projetoExistente.removeArquivo(arquivoParaRemover);  // Remove da coleção
-                    arquivoRepository.delete(arquivoParaRemover);  // Exclui do banco de dados
+                    projetoExistente.removeArquivo(arquivoParaRemover); // Remove da coleção
+                    arquivoRepository.delete(arquivoParaRemover); // Exclui do banco de dados
                     // Remover o arquivo do sistema de arquivos (opcional)
                     Files.deleteIfExists(Paths.get(arquivoParaRemover.getUrl()));
                 }
@@ -219,7 +220,6 @@ public class ProjetoService {
         projetoRepository.save(projetoExistente);
     }
 
-
     @Value("${diretorio.upload}")
     private String diretorioUpload;
 
@@ -230,37 +230,37 @@ public class ProjetoService {
         return caminho.toString();
     }
 
-    public void salvarProjetoComArquivos(Projeto projeto, List<MultipartFile> arquivos, TipoDocumento tipoDocumento) throws IOException {
+    public void salvarProjetoComArquivos(Projeto projeto, List<MultipartFile> arquivos, TipoDocumento tipoDocumento)
+            throws IOException {
         // Primeiro, salva o projeto para garantir que ele tenha um ID
         Projeto projetoSalvo = projetoRepository.save(projeto);
         System.out.println("Projeto salvo com ID: " + projetoSalvo.getId());
 
         // Agora, adiciona os arquivos ao projeto salvo
         for (MultipartFile arquivo : arquivos) {
-            String urlArquivo = saveFileToStorage(arquivo);  // Salvar o arquivo no sistema de arquivos
+            String urlArquivo = saveFileToStorage(arquivo); // Salvar o arquivo no sistema de arquivos
             if (urlArquivo == null) {
                 System.out.println("Falha ao salvar o arquivo " + arquivo.getOriginalFilename());
-                continue;  // Pula para o próximo arquivo se falhar ao salvar
+                continue; // Pula para o próximo arquivo se falhar ao salvar
             }
 
             // Criar o objeto Arquivo e associar ao projeto
             Arquivo novoArquivo = new Arquivo();
             novoArquivo.setNome(arquivo.getOriginalFilename());
-            novoArquivo.setUrl(urlArquivo);  // Define a URL do arquivo salvo
+            novoArquivo.setUrl(urlArquivo); // Define a URL do arquivo salvo
             novoArquivo.setTipoDocumento(tipoDocumento);
-            novoArquivo.setProjeto(projetoSalvo);  // Associa o arquivo ao projeto salvo
+            novoArquivo.setProjeto(projetoSalvo); // Associa o arquivo ao projeto salvo
 
-            arquivoRepository.save(novoArquivo);  // Salvar o arquivo no repositório de Arquivo
+            arquivoRepository.save(novoArquivo); // Salvar o arquivo no repositório de Arquivo
             System.out.println("Arquivo salvo: " + novoArquivo.getNome());
 
-            projetoSalvo.addArquivo(novoArquivo);  // Adicionar o arquivo ao projeto
+            projetoSalvo.addArquivo(novoArquivo); // Adicionar o arquivo ao projeto
         }
 
         // Salva o projeto novamente para garantir a associação dos arquivos
         projetoRepository.save(projetoSalvo);
         System.out.println("Arquivos associados e projeto salvo com arquivos.");
     }
-
 
     private String saveFileToStorage(MultipartFile file) {
         String folder = "src/main/resources/static/uploads/";
@@ -275,11 +275,48 @@ public class ProjetoService {
         } catch (IOException e) {
             // Log do erro e retorno nulo se houver falha
             e.printStackTrace();
-            return null;  // Retorna null em caso de erro
+            return null; // Retorna null em caso de erro
         }
 
         // Retornar o caminho completo do arquivo salvo
         return path.toString();
+    }
+
+    public List<Projeto> buscarProjetosPorTermo(String termo) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Projeto> cq = cb.createQuery(Projeto.class);
+        Root<Projeto> projeto = cq.from(Projeto.class);
+
+        List<Predicate> predicates = new ArrayList<>();
+
+        if (termo != null && !termo.isEmpty()) {
+            // Remover R$ e converter o termo para um número
+            String valorTermo = termo.replace("R$", "").replace(".", "").replace(",", ".").trim();
+            Double valorBusca = null;
+
+            try {
+                valorBusca = Double.parseDouble(valorTermo);
+            } catch (NumberFormatException e) {
+                // Se não for um número, apenas continue
+            }
+
+            predicates.add(cb.or(
+                cb.like(cb.lower(projeto.get("referencia")), "%" + termo.toLowerCase() + "%"),
+                cb.like(cb.lower(projeto.get("coordenador")), "%" + termo.toLowerCase() + "%"),
+                cb.like(cb.lower(projeto.get("descricao")), "%" + termo.toLowerCase() + "%"),
+                cb.like(cb.lower(projeto.get("situacao")), "%" + termo.toLowerCase() + "%"),
+                cb.like(cb.lower(projeto.get("classificacao")), "%" + termo.toLowerCase() + "%"),
+                cb.like(cb.lower(projeto.get("empresa")), "%" + termo.toLowerCase() + "%")
+            ));
+
+            // Adicionar condição para buscar pelo valor
+            if (valorBusca != null) {
+                predicates.add(cb.equal(projeto.get("valor"), valorBusca));
+            }
+        }
+
+        cq.where(predicates.toArray(new Predicate[0]));
+        return entityManager.createQuery(cq).getResultList();
     }
 
 }

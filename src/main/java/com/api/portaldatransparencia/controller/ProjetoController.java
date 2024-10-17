@@ -37,12 +37,13 @@ public class ProjetoController {
     @Autowired
     private ProjetoService projetoService;
 
-    @PostMapping(consumes = {"multipart/form-data"})
+    @PostMapping(consumes = { "multipart/form-data" })
     public ResponseEntity<String> criarProjeto(
             @RequestParam("projeto") String projetoJson,
             @RequestParam(value = "planosDeTrabalho", required = false) MultipartFile[] planosDeTrabalho,
             @RequestParam(value = "contratos", required = false) MultipartFile[] contratos,
-            @RequestParam(value = "termosAditivos", required = false) MultipartFile[] termosAditivos) throws IOException {
+            @RequestParam(value = "termosAditivos", required = false) MultipartFile[] termosAditivos)
+            throws IOException {
 
         // Configurar o ObjectMapper como antes
         ObjectMapper objectMapper = new ObjectMapper();
@@ -68,7 +69,8 @@ public class ProjetoController {
         // Salvar múltiplos arquivos
         if (planosDeTrabalho != null && planosDeTrabalho.length > 0) {
             System.out.println("Salvando planos de trabalho...");
-            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(planosDeTrabalho), TipoDocumento.PLANO_DE_TRABALHO);
+            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(planosDeTrabalho),
+                    TipoDocumento.PLANO_DE_TRABALHO);
         }
 
         if (contratos != null && contratos.length > 0) {
@@ -78,7 +80,8 @@ public class ProjetoController {
 
         if (termosAditivos != null && termosAditivos.length > 0) {
             System.out.println("Salvando termos aditivos...");
-            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(termosAditivos), TipoDocumento.TERMO_ADITIVO);
+            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(termosAditivos),
+                    TipoDocumento.TERMO_ADITIVO);
         }
 
         // Salvar o projeto
@@ -99,15 +102,8 @@ public class ProjetoController {
     }
 
     @GetMapping("/search")
-    public List<Projeto> buscarProjetos(
-            @RequestParam(required = false) String referencia,
-            @RequestParam(required = false) String coordenador,
-            @RequestParam(required = false) LocalDate dataInicio,
-            @RequestParam(required = false) LocalDate dataTermino,
-            @RequestParam(required = false) String classificacao,
-            @RequestParam(required = false) String situacao
-    ) {
-        return projetoService.buscarProjetos(referencia, coordenador, dataInicio, dataTermino, classificacao, situacao);
+    public List<Projeto> buscarProjetos(@RequestParam(required = false) String termo) {
+        return projetoService.buscarProjetosPorTermo(termo);
     }
 
     @DeleteMapping("/{id}")
@@ -119,14 +115,15 @@ public class ProjetoController {
         return ResponseEntity.notFound().build();
     }
 
-    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
+    @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
     public ResponseEntity<String> atualizarProjeto(
             @PathVariable Long id,
             @RequestParam("projeto") String projetoJson,
             @RequestParam(value = "planosDeTrabalho", required = false) MultipartFile[] planosDeTrabalho,
             @RequestParam(value = "contratos", required = false) MultipartFile[] contratos,
             @RequestParam(value = "termosAditivos", required = false) MultipartFile[] termosAditivos,
-            @RequestParam(value = "arquivosRemovidos", required = false) String arquivosRemovidosJson) throws IOException {
+            @RequestParam(value = "arquivosRemovidos", required = false) String arquivosRemovidosJson)
+            throws IOException {
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
@@ -152,13 +149,16 @@ public class ProjetoController {
         }
 
         // Se algum dos arrays for nulo, inicializar como uma lista vazia
-        List<MultipartFile> planosDeTrabalhoList = planosDeTrabalho != null ? Arrays.asList(planosDeTrabalho) : new ArrayList<>();
+        List<MultipartFile> planosDeTrabalhoList = planosDeTrabalho != null ? Arrays.asList(planosDeTrabalho)
+                : new ArrayList<>();
         List<MultipartFile> contratosList = contratos != null ? Arrays.asList(contratos) : new ArrayList<>();
-        List<MultipartFile> termosAditivosList = termosAditivos != null ? Arrays.asList(termosAditivos) : new ArrayList<>();
+        List<MultipartFile> termosAditivosList = termosAditivos != null ? Arrays.asList(termosAditivos)
+                : new ArrayList<>();
 
         // Atualizar projeto e arquivos associados
         try {
-            projetoService.atualizarProjeto(id, projetoAtualizado, planosDeTrabalhoList, contratosList, termosAditivosList, arquivosRemovidos);
+            projetoService.atualizarProjeto(id, projetoAtualizado, planosDeTrabalhoList, contratosList,
+                    termosAditivosList, arquivosRemovidos);
             return ResponseEntity.ok("Projeto atualizado com sucesso!");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Erro ao atualizar projeto: " + e.getMessage());
