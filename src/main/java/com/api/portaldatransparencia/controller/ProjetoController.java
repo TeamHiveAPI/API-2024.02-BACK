@@ -1,6 +1,8 @@
 package com.api.portaldatransparencia.controller;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +15,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,24 +46,25 @@ public class ProjetoController {
     @Autowired
     private ProjetoService projetoService;
 
-    @PostMapping(consumes = { "multipart/form-data" })
+    // Diretórios para upload e download, configurados no application.properties
+    @Value("${diretorio.upload}")
+    private String uploadDir;
+
+    @Value("${diretorio.download}")
+    private String downloadDir;
+
+    @PostMapping(consumes = {"multipart/form-data"})
     public ResponseEntity<String> criarProjeto(
             @RequestParam("projeto") String projetoJson,
             @RequestParam(value = "planosDeTrabalho", required = false) MultipartFile[] planosDeTrabalho,
             @RequestParam(value = "contratos", required = false) MultipartFile[] contratos,
-            @RequestParam(value = "termosAditivos", required = false) MultipartFile[] termosAditivos)
-            throws IOException {
+            @RequestParam(value = "termosAditivos", required = false) MultipartFile[] termosAditivos) throws IOException {
 
-        // Configurar o ObjectMapper como antes
+        // Configurar o ObjectMapper
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         objectMapper.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
-
-        // Log para verificar o conteúdo dos arquivos
-        System.out.println("Planos de Trabalho: " + (planosDeTrabalho != null ? planosDeTrabalho.length : "null"));
-        System.out.println("Contratos: " + (contratos != null ? contratos.length : "null"));
-        System.out.println("Termos Aditivos: " + (termosAditivos != null ? termosAditivos.length : "null"));
 
         // Converter JSON para objeto Projeto
         Projeto projeto;
@@ -64,28 +74,20 @@ public class ProjetoController {
             return ResponseEntity.badRequest().body("Erro ao converter JSON: " + e.getMessage());
         }
 
-        System.out.println("Projeto recebido: " + projeto.getTitulo());
-
         // Salvar múltiplos arquivos
         if (planosDeTrabalho != null && planosDeTrabalho.length > 0) {
-            System.out.println("Salvando planos de trabalho...");
-            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(planosDeTrabalho),
-                    TipoDocumento.PLANO_DE_TRABALHO);
+            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(planosDeTrabalho), TipoDocumento.PLANO_DE_TRABALHO);
         }
 
         if (contratos != null && contratos.length > 0) {
-            System.out.println("Salvando contratos...");
             projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(contratos), TipoDocumento.CONTRATO);
         }
 
         if (termosAditivos != null && termosAditivos.length > 0) {
-            System.out.println("Salvando termos aditivos...");
-            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(termosAditivos),
-                    TipoDocumento.TERMO_ADITIVO);
+            projetoService.salvarProjetoComArquivos(projeto, Arrays.asList(termosAditivos), TipoDocumento.TERMO_ADITIVO);
         }
 
         // Salvar o projeto
-        System.out.println("Salvando projeto final...");
         Projeto projetoSalvo = projetoService.salvarProjeto(projeto);
         return ResponseEntity.ok("Projeto criado com sucesso!");
     }
@@ -113,7 +115,6 @@ public class ProjetoController {
         return projetoService.buscarProjetosPorCampos(titulo, coordenador, contratante, dataInicio, dataTermino, termo);
     }
 
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarProjeto(@PathVariable Long id) {
         if (projetoService.buscarProjetoPorId(id).isPresent()) {
@@ -123,15 +124,14 @@ public class ProjetoController {
         return ResponseEntity.notFound().build();
     }
 
-    @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
+    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
     public ResponseEntity<String> atualizarProjeto(
             @PathVariable Long id,
             @RequestParam("projeto") String projetoJson,
             @RequestParam(value = "planosDeTrabalho", required = false) MultipartFile[] planosDeTrabalho,
             @RequestParam(value = "contratos", required = false) MultipartFile[] contratos,
             @RequestParam(value = "termosAditivos", required = false) MultipartFile[] termosAditivos,
-            @RequestParam(value = "arquivosRemovidos", required = false) String arquivosRemovidosJson)
-            throws IOException {
+            @RequestParam(value = "arquivosRemovidos", required = false) String arquivosRemovidosJson) throws IOException {
 
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
@@ -146,30 +146,36 @@ public class ProjetoController {
             return ResponseEntity.badRequest().body("Erro ao converter JSON: " + e.getMessage());
         }
 
-        // Converter JSON de arquivos removidos para uma lista de Strings
-        List<String> arquivosRemovidos = new ArrayList<>();
-        try {
-            if (arquivosRemovidosJson != null && !arquivosRemovidosJson.isEmpty()) {
-                arquivosRemovidos = Arrays.asList(objectMapper.readValue(arquivosRemovidosJson, String[].class));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erro ao converter arquivos removidos: " + e.getMessage());
-        }
-
-        // Se algum dos arrays for nulo, inicializar como uma lista vazia
-        List<MultipartFile> planosDeTrabalhoList = planosDeTrabalho != null ? Arrays.asList(planosDeTrabalho)
-                : new ArrayList<>();
-        List<MultipartFile> contratosList = contratos != null ? Arrays.asList(contratos) : new ArrayList<>();
-        List<MultipartFile> termosAditivosList = termosAditivos != null ? Arrays.asList(termosAditivos)
-                : new ArrayList<>();
-
         // Atualizar projeto e arquivos associados
+        projetoService.atualizarProjeto(id, projetoAtualizado,
+                Arrays.asList(planosDeTrabalho), Arrays.asList(contratos), Arrays.asList(termosAditivos),
+                Arrays.asList(objectMapper.readValue(arquivosRemovidosJson, String[].class)));
+
+        return ResponseEntity.ok("Projeto atualizado com sucesso!");
+    }
+
+    @GetMapping("/download/{filename:.+}")
+    public ResponseEntity<Resource> downloadArquivo(@PathVariable String filename) {
         try {
-            projetoService.atualizarProjeto(id, projetoAtualizado, planosDeTrabalhoList, contratosList,
-                    termosAditivosList, arquivosRemovidos);
-            return ResponseEntity.ok("Projeto atualizado com sucesso!");
+            File file = new File(uploadDir, filename);
+
+            // Verifica se o arquivo existe
+            if (!file.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = new UrlResource(file.toURI());
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + resource.getFilename());
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+        } catch (MalformedURLException e) {
+            return ResponseEntity.badRequest().body(null);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Erro ao atualizar projeto: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
