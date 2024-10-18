@@ -146,10 +146,14 @@ public class ProjetoController {
             return ResponseEntity.badRequest().body("Erro ao converter JSON: " + e.getMessage());
         }
 
+        // Garantir que as listas de arquivos não sejam nulas
+        List<MultipartFile> planosDeTrabalhoList = planosDeTrabalho != null ? Arrays.asList(planosDeTrabalho) : new ArrayList<>();
+        List<MultipartFile> contratosList = contratos != null ? Arrays.asList(contratos) : new ArrayList<>();
+        List<MultipartFile> termosAditivosList = termosAditivos != null ? Arrays.asList(termosAditivos) : new ArrayList<>();
+        List<String> arquivosRemovidosList = arquivosRemovidosJson != null ? Arrays.asList(objectMapper.readValue(arquivosRemovidosJson, String[].class)) : new ArrayList<>();
+
         // Atualizar projeto e arquivos associados
-        projetoService.atualizarProjeto(id, projetoAtualizado,
-                Arrays.asList(planosDeTrabalho), Arrays.asList(contratos), Arrays.asList(termosAditivos),
-                Arrays.asList(objectMapper.readValue(arquivosRemovidosJson, String[].class)));
+        projetoService.atualizarProjeto(id, projetoAtualizado, planosDeTrabalhoList, contratosList, termosAditivosList, arquivosRemovidosList);
 
         return ResponseEntity.ok("Projeto atualizado com sucesso!");
     }
