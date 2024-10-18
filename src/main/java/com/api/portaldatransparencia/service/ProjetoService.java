@@ -280,12 +280,41 @@ public class ProjetoService {
             }
         }
 
-        // Filtrar por termo geral
+        // Filtrar por termo geral, incluindo busca por ID, datas e outros campos
         if (termo != null && !termo.isEmpty()) {
-            predicates.add(cb.or(
+            List<Predicate> termoPredicates = new ArrayList<>();
+
+            // Tentar converter o termo em número para a busca por ID
+            try {
+                Long idTermo = Long.parseLong(termo);
+                termoPredicates.add(cb.equal(projeto.get("id"), idTermo));
+            } catch (NumberFormatException e) {
+                // Se não for um número, apenas continuar com as buscas nos outros campos
+            }
+
+            // Adicionar a busca por outros campos (texto)
+            termoPredicates.add(cb.or(
                     cb.like(cb.lower(projeto.get("descricao")), "%" + termo.toLowerCase() + "%"),
-                    cb.like(cb.lower(projeto.get("classificacao")), "%" + termo.toLowerCase() + "%")
+                    cb.like(cb.lower(projeto.get("classificacao")), "%" + termo.toLowerCase() + "%"),
+                    cb.like(cb.lower(projeto.get("titulo")), "%" + termo.toLowerCase() + "%"),
+                    cb.like(cb.lower(projeto.get("coordenador")), "%" + termo.toLowerCase() + "%"),
+                    cb.like(cb.lower(projeto.get("empresa")), "%" + termo.toLowerCase() + "%"),
+                    cb.like(cb.lower(projeto.get("situacao")), "%" + termo.toLowerCase() + "%")
             ));
+
+            // Adicionar a busca por data de início e término, tentando converter o termo para uma data
+            try {
+                LocalDate dataTermo = LocalDate.parse(termo);
+                termoPredicates.add(cb.or(
+                        cb.equal(projeto.get("dataInicio"), dataTermo),
+                        cb.equal(projeto.get("dataTermino"), dataTermo)
+                ));
+            } catch (Exception e) {
+                // Se o termo não for uma data válida, continuar com a busca nos outros campos
+            }
+
+            // Adicionar os predicados ao where
+            predicates.add(cb.or(termoPredicates.toArray(new Predicate[0])));
         }
 
         cq.where(predicates.toArray(new Predicate[0]));
