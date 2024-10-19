@@ -219,13 +219,26 @@ public class ProjetoService {
     private String saveFileToStorage(MultipartFile file) {
         String folder = "src/main/resources/static/uploads/";
         Path path = Paths.get(folder + file.getOriginalFilename());
+        String originalFilename = file.getOriginalFilename();
+        String filename = originalFilename;
+        int count = 1;
 
         try {
             // Criar os diretórios caso ainda não existam
             Files.createDirectories(path.getParent());
 
+            // Verifica se o arquivo já existe e ajusta o nome
+            while (Files.exists(path)) {
+                String fileBaseName = filename.substring(0, filename.lastIndexOf('.'));
+                String fileExtension = filename.substring(filename.lastIndexOf('.'));
+                filename = fileBaseName + "(" + count + ")" + fileExtension;
+                path = Paths.get(folder + filename);
+                count++;
+            }
+
             // Salvar o arquivo no diretório
-            Files.write(path, file.getBytes());
+            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
         } catch (IOException e) {
             // Log do erro e retorno nulo se houver falha
             e.printStackTrace();
@@ -235,6 +248,7 @@ public class ProjetoService {
         // Retornar o caminho completo do arquivo salvo
         return path.toString();
     }
+
 
     public List<Projeto> buscarProjetosPorCampos(String titulo, String coordenador, String contratante, String dataInicio, String dataTermino, String termo) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
