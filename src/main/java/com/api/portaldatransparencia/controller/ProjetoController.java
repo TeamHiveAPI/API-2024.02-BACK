@@ -1,8 +1,10 @@
 package com.api.portaldatransparencia.controller;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -161,25 +163,47 @@ public class ProjetoController {
     @GetMapping("/download/{filename:.+}")
     public ResponseEntity<Resource> downloadArquivo(@PathVariable String filename) {
         try {
+            // Diretório onde os arquivos estão armazenados
             File file = new File(uploadDir, filename);
 
             // Verifica se o arquivo existe
             if (!file.exists()) {
-                return ResponseEntity.notFound().build();
+                throw new FileNotFoundException("Arquivo não encontrado: " + filename);
             }
 
-            Resource resource = new UrlResource(file.toURI());
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + resource.getFilename());
+            // Cria um recurso a partir do arquivo
+            Path filePath = file.toPath();
+            Resource resource = new UrlResource(filePath.toUri());
 
+            // Verifica se o arquivo é legível
+            if (!resource.exists() || !resource.isReadable()) {
+                throw new FileNotFoundException("Arquivo não legível: " + filename);
+            }
+
+            // Define o Content-Type com base na extensão do arquivo
+            String contentType;
+            if (filename.endsWith(".pdf")) {
+                contentType = "application/pdf";
+            } else if (filename.endsWith(".docx")) {
+                contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            } else {
+                contentType = "application/octet-stream"; // Tipo genérico para outros arquivos
+            }
+
+            // Retorna o arquivo com o Content-Disposition para forçar o download
             return ResponseEntity.ok()
-                    .headers(headers)
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                     .body(resource);
-        } catch (MalformedURLException e) {
-            return ResponseEntity.badRequest().body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+
+        } catch (FileNotFoundException ex) {
+            // Se o arquivo não for encontrado, retorna um erro 404
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(null);
+        } catch (IOException ex) {
+            // Se houver algum erro na leitura do arquivo, retorna erro interno 500
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(null);
         }
     }
 
